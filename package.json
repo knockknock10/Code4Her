@@ -1,0 +1,25 @@
+{
+  "name": "safenest-mvp",
+  "version": "1.0.0",
+  "description": "SafeNest - Discreet Domestic Safety Assistant",
+  "type": "module",
+  "scripts": {
+    "dev": "concurrently \"vite -c frontend/vite.config.js\" \"node backend/server.js\"",
+    "build": "vite build -c frontend/vite.config.js",
+    "start": "node backend/server.js"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "^4.18.2",
+    "leaflet": "^1.9.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-leaflet": "^4.2.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^4.2.0",
+    "concurrently": "^8.2.2",
+    "lucide-react": "^0.300.0",
+    "vite": "^5.0.0"
+  }
+}
