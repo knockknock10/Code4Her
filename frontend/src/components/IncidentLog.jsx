@@ -6,12 +6,22 @@ const IncidentLog = () => {
   const [expandedId, setExpandedId] = useState(null);
 
   useEffect(() => {
-    const incidents = getIncidents().map(i => ({ ...i, logType: 'incident' }));
-    const security = getSecurityEvents().map(s => ({ ...s, logType: 'security', id: s.id || Date.now() + Math.random() }));
-    
-    // Merge and sort descending
-    const merged = [...incidents, ...security].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-    setLogs(merged);
+    try {
+      const rawIncidents = getIncidents();
+      const allIncidents = Array.isArray(rawIncidents) ? rawIncidents : [];
+      const incidents = allIncidents.map(i => ({ ...i, logType: 'incident' }));
+      
+      const rawSecurity = getSecurityEvents();
+      const allSecurity = Array.isArray(rawSecurity) ? rawSecurity : [];
+      const security = allSecurity.map(s => ({ ...s, logType: 'security', id: s.id || Date.now() + Math.random() }));
+      
+      // Merge and sort descending
+      const merged = [...incidents, ...security].sort((a, b) => new Date(b.timestamp || 0) - new Date(a.timestamp || 0));
+      setLogs(merged);
+    } catch (e) {
+      console.error("Failed to load logs:", e);
+      setLogs([]);
+    }
   }, []);
 
   if (logs.length === 0) {
@@ -87,7 +97,7 @@ const IncidentLog = () => {
               <span style={{ fontWeight: 'bold' }}>{new Date(log.timestamp).toLocaleString()}</span>
               {isIncident ? (
                 <span style={{ color: '#ef4444', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 'bold' }}>
-                  {log.triggerType.replace('_', ' ')}
+                  {(log.triggerType || 'Unknown').replace('_', ' ')}
                 </span>
               ) : (
                 <span style={{ color: '#eab308', textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 'bold' }}>
