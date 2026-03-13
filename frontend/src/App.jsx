@@ -6,10 +6,11 @@ import SafetyMap from './components/SafetyMap.jsx';
 import Settings from './components/Settings.jsx';
 import WomensLaws from './components/WomensLaws.jsx';
 import { getCurrentLocation } from './utils/locationService.js';
-import { saveIncident } from './utils/incidentStore.js';
+import { saveIncident, getIncidents, saveSecurityEvent } from './utils/incidentStore.js';
 import { getContacts } from './utils/contactStore.js';
 import { checkDangerWarning } from './utils/dangerZoneService.js';
 import EmergencyOverlay from './components/EmergencyOverlay.jsx';
+import SecureLogin from './components/SecureLogin.jsx';
 import { Map, List, Settings as SettingsIcon, Home, Book } from 'lucide-react';
 
 const App = () => {
@@ -20,6 +21,7 @@ const App = () => {
   const [notifiedContacts, setNotifiedContacts] = useState([]);
   const [dangerWarning, setDangerWarning] = useState(null);
   const [lastKeyPressTime, setLastKeyPressTime] = useState(0);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
     const config = localStorage.getItem('safenest_config');
@@ -37,6 +39,7 @@ const App = () => {
         if (now - lastKeyPressTime < 400) { 
           // Switch to fake notes app instantly
           setEmergencyMode(false);
+          setIsAuthenticated(false);
           setActiveTab('home');
         }
         setLastKeyPressTime(now);
@@ -64,6 +67,20 @@ const App = () => {
     const interval = setInterval(checkLocation, 15000);
     return () => clearInterval(interval);
   }, [isConfigured, emergencyMode]);
+
+  // Failsafe: Log if app closed during emergency
+  useEffect(() => {
+    const handleBeforeUnload = (e) => {
+      if (emergencyMode) {
+        saveSecurityEvent({
+          type: 'Emergency Interrupted',
+          description: 'The application was closed while Emergency Mode was active. Evidence collection may be incomplete.'
+        });
+      }
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [emergencyMode]);
 
   const handleConfigComplete = (config) => {
     localStorage.setItem('safenest_config', JSON.stringify(config));
@@ -138,6 +155,7 @@ const App = () => {
           notifiedContacts={notifiedContacts}
           onCancel={() => {
             setEmergencyMode(false);
+            setIsAuthenticated(false);
             setActiveTab('home'); // Quick escape goes to Home component
           }}
         />
@@ -145,10 +163,19 @@ const App = () => {
 
       <div className="content-area">
         {activeTab === 'home' && <HiddenHome onTrigger={triggerEmergency} triggerConfig={userConfig.trigger} />}
-        {activeTab === 'incidents' && <IncidentLog />}
         {activeTab === 'map' && <SafetyMap />}
         {activeTab === 'laws' && <WomensLaws />}
-        {activeTab === 'settings' && <Settings config={userConfig} onUpdate={handleConfigComplete} />}
+        
+        {/* Secure Areas */}
+        {(activeTab === 'incidents' || activeTab === 'settings') && !isAuthenticated && (
+          <SecureLogin 
+            expectedHash={userConfig.security?.passcodeHash} 
+            onAuthenticated={() => setIsAuthenticated(true)}
+            onCancel={() => setActiveTab('home')}
+          />
+        )}
+        {activeTab === 'incidents' && isAuthenticated && <IncidentLog />}
+        {activeTab === 'settings' && isAuthenticated && <Settings config={userConfig} onUpdate={handleConfigComplete} />}
       </div>
 
       <nav className="bottom-nav">

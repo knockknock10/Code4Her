@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { getContacts, deleteContact, addContact } from '../utils/contactStore.js';
+import { hashPasscode } from '../utils/securityEncryption.js';
 
 const Settings = ({ config, onUpdate }) => {
   const [contacts, setContacts] = useState([]);
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
   const [contactEmail, setContactEmail] = useState('');
+  const [newPasscode, setNewPasscode] = useState('');
 
   useEffect(() => {
     setContacts(getContacts());
@@ -83,6 +85,36 @@ const Settings = ({ config, onUpdate }) => {
             onChange={(e) => setContactEmail(e.target.value)}
           />
           <button className="btn btn-outline" onClick={handleAddContact}>Add Contact</button>
+        </div>
+      </div>
+
+      <div className="card" style={{ marginTop: '1rem' }}>
+        <h3>App Security</h3>
+        <p style={{fontSize: '0.85rem', color: '#64748b', marginBottom: '1rem'}}>Update the passcode required to access sensitive evidence and settings.</p>
+        <div className="input-group">
+          <input 
+            type="number" 
+            placeholder="New App Passcode" 
+            className="text-input" 
+            value={newPasscode}
+            onChange={(e) => setNewPasscode(e.target.value)}
+          />
+          <button 
+            className="btn btn-outline" 
+            onClick={() => {
+              if (newPasscode) {
+                const updatedConfig = { 
+                  ...config, 
+                  security: { ...config.security, passcodeHash: hashPasscode(newPasscode) } 
+                };
+                onUpdate(updatedConfig);
+                setNewPasscode('');
+                alert('Passcode updated!');
+              }
+            }}
+          >
+            Update Passcode
+          </button>
         </div>
       </div>
 

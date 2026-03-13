@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
 import { saveContacts, getContacts } from '../utils/contactStore.js';
+import { hashPasscode } from '../utils/securityEncryption.js';
 
 const Onboarding = ({ onComplete }) => {
   const [step, setStep] = useState(1);
   const [config, setConfig] = useState({
+    security: {
+      passcodeHash: '', // Set by the user to secure the App
+    },
     trigger: {
       type: 'passcode',
       value: '1234'
@@ -13,6 +17,8 @@ const Onboarding = ({ onComplete }) => {
       audioRecording: false
     }
   });
+
+  const [rawPasscode, setRawPasscode] = useState('');
 
   const [contactName, setContactName] = useState('');
   const [contactPhone, setContactPhone] = useState('');
@@ -33,7 +39,14 @@ const Onboarding = ({ onComplete }) => {
   };
 
   const handleComplete = () => {
-    onComplete(config);
+    // Before completing, hash the secure passcode for storage
+    const finalConfig = {
+      ...config,
+      security: {
+        passcodeHash: hashPasscode(rawPasscode || '0000') // Default to 0000 if empty
+      }
+    };
+    onComplete(finalConfig);
   };
 
   const renderStep1 = () => (
@@ -52,6 +65,20 @@ const Onboarding = ({ onComplete }) => {
           <option value="shake">Shake Device</option>
           <option value="tap_pattern">Hidden Tap Pattern (5 taps)</option>
         </select>
+      </div>
+
+      <div className="input-group" style={{ marginTop: '1rem', borderTop: '1px solid #e2e8f0', paddingTop: '1rem'}}>
+        <label className="input-label">App Access Passcode</label>
+        <p style={{fontSize: '0.8rem', color: '#64748b', marginBottom: '0.5rem'}}>
+          Required to access your evidence and settings. If someone enters it wrong, we take their photo.
+        </p>
+        <input 
+          type="number"
+          className="text-input" 
+          placeholder="e.g. 0000"
+          value={rawPasscode}
+          onChange={(e) => setRawPasscode(e.target.value)}
+        />
       </div>
 
       {config.trigger.type === 'passcode' && (
