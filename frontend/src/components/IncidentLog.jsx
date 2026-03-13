@@ -18,7 +18,7 @@ const IncidentLog = () => {
 
   return (
     <div>
-      <h2>Incident History</h2>
+      <h2 style={{ marginBottom: '1rem' }}>Incident History</h2>
       {logs.map((log) => (
         <div key={log.id} className="card log-item">
           <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -30,17 +30,15 @@ const IncidentLog = () => {
           
           {log.location ? (
             <p style={{ fontSize: '0.9rem', marginBottom: '0.25rem' }}>
-              📍 Lat: {log.location.lat.toFixed(4)}, Lng: {log.location.lng.toFixed(4)}
+              📍 <strong>Location:</strong> <a href={`https://maps.google.com/?q=${log.location.lat},${log.location.lng}`} target="_blank" rel="noreferrer">Open in Maps</a> (Lat: {log.location.lat.toFixed(4)}, Lng: {log.location.lng.toFixed(4)})
             </p>
           ) : (
-            <p style={{ fontSize: '0.9rem', marginBottom: '0.25rem' }}>📍 Location unavailable</p>
+            <p style={{ fontSize: '0.9rem', marginBottom: '0.25rem' }}>📍 <strong>Location:</strong> Unavailable</p>
           )}
 
-          {log.recordingIndicator && (
-            <p style={{ fontSize: '0.9rem', color: '#2563eb', marginBottom: 0 }}>
-              🎙️ Audio successfully recorded
-            </p>
-          )}
+          <p style={{ fontSize: '0.9rem', marginBottom: '0.25rem', color: log.recordingIndicator ? '#2563eb' : '#64748b' }}>
+            🎙️ <strong>Recording Status:</strong> {log.recordingIndicator ? 'Audio Captured' : 'Not Recorded'}
+          </p>
         </div>
       ))}
     </div>
